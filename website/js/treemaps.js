@@ -5,16 +5,16 @@ window.addEventListener("load", function(){
   var tree = {
       name: "tree",
       children: [
-          { name: "JFK", size: 30 },
-          { name: "SFO", size: 24 },
-          { name: "LGW", size: 9 },
+          { name: "JFK", size: 17 },
+          { name: "SFO", size: 15 },
           { name: "LGA", size: 8 },
-          { name: "EWR", size: 7 }
+          { name: "LGW", size: 5 },
+          { name: "DEN", size: 5 }
       ]
   };
 
-  var width = 300,
-      height = 300,
+  var width = 500,
+      height = 500,
       color = d3.scale.category20c(),
       div = d3.select("body").append("div")
          .style("position", "relative");
@@ -31,6 +31,8 @@ window.addEventListener("load", function(){
         .call(position)
         .style("background-color", function(d) {
             return d.name == 'tree' ? '#fff' : color(d.parent.name); })
+        .style("background-image", function (d) { 
+          return "url(img/" + d.name + ".jpg)";})
         .append('div')
         .style("font-size", function(d) {
             // compute font size based on sqrt(area)
