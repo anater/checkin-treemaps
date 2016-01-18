@@ -2,39 +2,34 @@
   var tree = {
       name: "tree",
       children: [
-          { name: "JFK", size: 17, city: "New York", img: "" },
-          { name: "SFO", size: 15, city: "San Francisco", img: "" },
-          { name: "LGA", size: 8, city: "New York", img: "" },
-          { name: "LGW", size: 5, city: "London", img: "" },
-          { name: "DEN", size: 5, city: "Denver", img: "" }
+          { name: "JFK", size: 17, city: "New York" },
+          { name: "SFO", size: 15, city: "San Francisco" },
+          { name: "LGA", size: 8, city: "New York" },
+          { name: "LGW", size: 5, city: "London" },
+          { name: "DEN", size: 5, city: "Denver" }
       ]
   };
 
 //Flickr
-  var flickr = new Flickr({
-    api_key: "128b500ab781a63272184b685ed06cd2"
-  });
+  var flickr = new Flickr({api_key: "128b500ab781a63272184b685ed06cd2"});
 
-  function findPhoto(){
-    this.style("background-image", function(d){
-      flickr.photos.search({
-        text: d.name,
+  function findPhoto(query, cb){
+    flickr.photos.search(
+      {
+        text: query,
         sort: "interestingness-desc"
       }, 
       function(err, result){
         if(err){ 
           throw new Error(err); 
         }
-        else if(result){
-          // set photo
-          var photo = result.photos.photo[0];
-          // generate photo url
-          //var img = 
-
-          return "url(" + createPhotoURL(photo.farm, photo.server, photo.id, photo.secret) + ")";
-        }
-      });
-    });
+        // set photo
+        var photo = result.photos.photo[0];
+        // generate photo url
+        var img = createPhotoURL(photo.farm, photo.server, photo.id, photo.secret);
+        cb(img);
+      }
+    );
   }
 
   function createPhotoURL(farmId, serverId, id, secret){
@@ -59,23 +54,26 @@ window.addEventListener("load", function(){
   
   var treemap = d3.layout.treemap()
       .size([width, height])
-      .value(function(d) { return d.size; });
+      .value(function(d) { 
+        return d.size; });
   
   var node = div.datum(tree).selectAll(".node")
         .data(treemap.nodes)
         .enter().append("div")
         .attr("class", "node")
         .call(position)
-        .call(findPhoto)
-        //.style("background-image", function(d) { 
-        //  return "url(" + findPhoto(d.name, function(img){console.log(img)}) + ")" ;})
+        .style("background-image", function(d) { 
+          return "url('img/" + d.name + ".jpg')";
+        })
         .append('div')
         .style("font-size", function(d) {
           return Math.max(20, 0.18*Math.sqrt(d.area))+'px'; })
-        .text(function(d) { return d.children ? null : d.name; })
+        .text(function(d) { 
+          return d.children ? null : d.name; })
         .append('span')
         .attr("class", "city")
-        .text(function(d){ return d.children ? null : d.city; });
+        .text(function(d){ 
+          return d.children ? null : d.city; });
 
   function position() {
     this.style("left", function(d) { return d.x + "px"; })
