@@ -13,23 +13,31 @@
 //Flickr
   var flickr = new Flickr({api_key: "128b500ab781a63272184b685ed06cd2"});
 
-  function findPhoto(query, cb){
-    flickr.photos.search(
-      {
-        text: query,
-        sort: "interestingness-desc"
-      }, 
-      function(err, result){
-        if(err){ 
-          throw new Error(err); 
+  function findPhoto(query){
+    return new Promise(function(resolve, reject) {
+      flickr.photos.search(
+        {
+          text: query + " airport",
+          sort: "interestingness-desc",
+          per_page: 20
+        }, 
+        function(err, result){
+          if(err){ 
+            reject(Error(err)); 
+          }
+          var max = result.photos.photo.length;
+          var random = Math.floor(Math.random() * max - 1) + 1;
+          console.log(query, random);
+          // set photo
+          var photo = result.photos.photo[random];
+          // generate photo url
+          var img = createPhotoURL(photo.farm, photo.server, photo.id, photo.secret);
+          //callback(img);
+
+          resolve({query,img});
         }
-        // set photo
-        var photo = result.photos.photo[0];
-        // generate photo url
-        var img = createPhotoURL(photo.farm, photo.server, photo.id, photo.secret);
-        cb(img);
-      }
-    );
+      );
+    })
   }
 
   function createPhotoURL(farmId, serverId, id, secret){
@@ -62,9 +70,8 @@ window.addEventListener("load", function(){
         .enter().append("div")
         .attr("class", "node")
         .call(position)
-        .style("background-image", function(d) { 
-          return "url('img/" + d.name + ".jpg')";
-        })
+        .attr("id", function(d){
+          return d.name; })
         .append('div')
         .style("font-size", function(d) {
           return Math.max(20, 0.18*Math.sqrt(d.area))+'px'; })
@@ -80,6 +87,17 @@ window.addEventListener("load", function(){
         .style("top", function(d) { return d.y + "px"; })
         .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
         .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
+  }
+
+  for (var i = 0; i < tree.children.length; i++) {
+    var child = tree.children[i],
+        id = "#" + child.name,
+        imgs = [];
+
+    findPhoto(tree.children[i].name).then(function(response){
+      d3.select("#"+response.query)
+        .style("background-image", "url('"+response.img+"')");
+    });
   }
 
 });
