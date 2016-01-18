@@ -1,15 +1,3 @@
-// Data
-  var tree = {
-      name: "tree",
-      children: [
-          { id: 1, name: "JFK", size: 17, city: "New York" },
-          { id: 2, name: "SFO", size: 15, city: "San Francisco" },
-          { id: 3, name: "LGA", size: 8, city: "New York" },
-          { id: 4, name: "LGW", size: 5, city: "London" },
-          { id: 5, name: "DEN", size: 5, city: "Denver" }
-      ]
-  };
-
 //Flickr
   var flickr = new Flickr({api_key: "128b500ab781a63272184b685ed06cd2"});
 
@@ -53,7 +41,6 @@
 
 window.addEventListener("load", function(){
 
-  //createTreemap(tree);
   var source = "https://api.foursquare.com/v2/users/self/venuehistory?oauth_token=KPOJ0YEPENUST3BFX0WNAXIC3TC1FTE5GUQRVXHTGPLXS1B3&v=20160118";
 
   d3.json(source, function(data) {
@@ -86,7 +73,6 @@ window.addEventListener("load", function(){
  
 
   function createTreemap(source){
-    console.log(source);
     //Treemap
     var width = 500,
         height = 500,
