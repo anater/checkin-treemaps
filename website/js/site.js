@@ -2,11 +2,11 @@
   var tree = {
       name: "tree",
       children: [
-          { name: "JFK", size: 17, city: "New York" },
-          { name: "SFO", size: 15, city: "San Francisco" },
-          { name: "LGA", size: 8, city: "New York" },
-          { name: "LGW", size: 5, city: "London" },
-          { name: "DEN", size: 5, city: "Denver" }
+          { id: 1, name: "JFK", size: 17, city: "New York" },
+          { id: 2, name: "SFO", size: 15, city: "San Francisco" },
+          { id: 3, name: "LGA", size: 8, city: "New York" },
+          { id: 4, name: "LGW", size: 5, city: "London" },
+          { id: 5, name: "DEN", size: 5, city: "Denver" }
       ]
   };
 
@@ -14,12 +14,13 @@
   var flickr = new Flickr({api_key: "128b500ab781a63272184b685ed06cd2"});
 
   function findPhoto(query){
+    //console.log(query);
     return new Promise(function(resolve, reject) {
       flickr.photos.search(
         {
-          text: query + " airport",
-          sort: "interestingness-desc",
-          per_page: 20
+          text: query.name,
+          sort: "relevance",
+          per_page: 5
         }, 
         function(err, result){
           if(err){ 
@@ -27,14 +28,13 @@
           }
           var max = result.photos.photo.length;
           var random = Math.floor(Math.random() * max - 1) + 1;
-          console.log(query, random);
           // set photo
           var photo = result.photos.photo[random];
           // generate photo url
           var img = createPhotoURL(photo.farm, photo.server, photo.id, photo.secret);
-          //callback(img);
+          var id = query.id.toString();
 
-          resolve({query,img});
+          resolve({img, id});
         }
       );
     })
@@ -46,58 +46,81 @@
         serverId = serverId,
         id = id,
         secret = secret,
-        url = "https://farm"+farmId+".staticflickr.com/"+serverId+"/"+id+"_"+secret+".jpg";
+        url = "https://farm"+farmId+".staticflickr.com/"+serverId+"/"+id+"_"+secret+"_z.jpg";
     return url;
   }
 
 
 window.addEventListener("load", function(){
 
-  //Treemap
-  var width = 500,
-      height = 500,
-      color = d3.scale.category20c(),
-      div = d3.select("body").append("div")
-         .style("position", "relative");
-  
-  var treemap = d3.layout.treemap()
-      .size([width, height])
-      .value(function(d) { 
-        return d.size; });
-  
-  var node = div.datum(tree).selectAll(".node")
-        .data(treemap.nodes)
-        .enter().append("div")
-        .attr("class", "node")
-        .call(position)
-        .attr("id", function(d){
-          return d.name; })
-        .append('div')
-        .style("font-size", function(d) {
-          return Math.max(20, 0.18*Math.sqrt(d.area))+'px'; })
-        .text(function(d) { 
-          return d.children ? null : d.name; })
-        .append('span')
-        .attr("class", "city")
-        .text(function(d){ 
-          return d.children ? null : d.city; });
+  //createTreemap(tree);
+  var source = "https://api.foursquare.com/v2/users/self/venuehistory?oauth_token=KPOJ0YEPENUST3BFX0WNAXIC3TC1FTE5GUQRVXHTGPLXS1B3&v=20160118";
 
-  function position() {
-    this.style("left", function(d) { return d.x + "px"; })
-        .style("top", function(d) { return d.y + "px"; })
-        .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
-        .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
+  d3.json(source, function(data) {
+    var venues = data.response.venues.items;
+    var venueTree = {
+      name: 'tree',
+      children: []
+    };
+
+    for (var i = 0; i < venues.length; i++) {
+      var v = venues[i];
+      venueTree.children[i]= {
+        'id': v.venue.id,
+        'size': v.beenHere, 
+        'name': v.venue.name, 
+        'lat': v.venue.location.lat, 
+        'lon': v.venue.location.lat,
+        'city': v.venue.location.city,
+      }
+      venueTree.children[i]['img'] = findPhoto(venueTree.children[i]).then(function(response){
+        //console.log(response);
+        var e = document.getElementById(response.id);
+        var style = "background-image: url('"+response.img+"')";
+        e.setAttribute('style', e.getAttribute('style')+style);
+        //console.log(e);
+      })
+    };
+    createTreemap(venueTree);
+  });
+ 
+
+  function createTreemap(source){
+    console.log(source);
+    //Treemap
+    var width = 500,
+        height = 500,
+        color = d3.scale.category20c(),
+        div = d3.select("body").append("div")
+           .style("position", "relative");
+    
+    var treemap = d3.layout.treemap()
+        .size([width, height])
+        .value(function(d) { 
+          return d.size; });
+    
+    var node = div.datum(source).selectAll(".node")
+          .data(treemap.nodes)
+          .enter().append("div")
+          .attr("class", "node")
+          .call(position)
+          .attr("id", function(d){
+            return d.id; })
+          .append('div')
+          .style("font-size", function(d) {
+            return Math.max(20, 0.18*Math.sqrt(d.area))+'px'; })
+          .text(function(d) { 
+            return d.children ? null : d.name; })
+          .append('span')
+          .attr("class", "city")
+          .text(function(d){ 
+            return d.children ? null : d.city; });
+
+    function position() {
+      this.style("left", function(d) { return d.x + "px"; })
+          .style("top", function(d) { return d.y + "px"; })
+          .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
+          .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
+    }
   }
-
-  for (var i = 0; i < tree.children.length; i++) {
-    var child = tree.children[i],
-        id = "#" + child.name,
-        imgs = [];
-
-    findPhoto(tree.children[i].name).then(function(response){
-      d3.select("#"+response.query)
-        .style("background-image", "url('"+response.img+"')");
-    });
-  }
-
 });
